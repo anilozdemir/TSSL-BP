@@ -22,6 +22,9 @@ import seaborn as sn
 import matplotlib.pyplot as plt
 import argparse
 
+# Anil adds
+import matplotlib
+matplotlib.use('Agg') 
 
 max_accuracy = 0
 min_loss = 1000
@@ -172,6 +175,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-config', action='store', dest='config', help='The path of config file')
     parser.add_argument('-checkpoint', action='store', dest='checkpoint', help='The path of checkpoint, if use checkpoint')
+    
     try:
         args = parser.parse_args()
     except:
@@ -183,11 +187,13 @@ if __name__ == '__main__':
     else:
         config_path = args.config
 
+
     logging.basicConfig(filename='result.log', level=logging.INFO)
     
     logging.info("start parsing settings")
     
     params = parse(config_path)
+    
     
     logging.info("finish parsing settings")
     
@@ -208,7 +214,9 @@ if __name__ == '__main__':
     
     logging.info("dataset loaded")
     if params['Network']['dataset'] == "MNIST":
+        print('issue before')
         data_path = os.path.expanduser(params['Network']['data_path'])
+        print(data_path)
         train_loader, test_loader = loadMNIST.get_mnist(data_path, params['Network'])
     elif params['Network']['dataset'] == "NMNIST_Spiking":
         data_path = os.path.expanduser(params['Network']['data_path'])

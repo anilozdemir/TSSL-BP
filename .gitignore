@@ -1,0 +1,10 @@
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+eggs
+*.egg-info
+*.ckpt*
+datasets/cifar10/
+datasets/mnist/
+__pycache__/
+checkpoint/
+*.log

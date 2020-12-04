@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import pycuda.driver as cuda
 import pycuda.autoinit  # Necessary for using its functions
 
+import matplotlib
+matplotlib.use('Agg')
 
 # task_train = Progress().add_task("[red]Training...", total=100)
 # task_test = Progress().add_task("[green]Testing...", total=100)
