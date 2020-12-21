@@ -12,8 +12,8 @@ def psp(inputs, network_config):
     syns = torch.zeros((shape[0], shape[1], shape[2], shape[3], n_steps), dtype=glv.dtype, device=glv.device)
 
     for t in range(n_steps):
-        syn = syn - syn / tau_s + inputs[..., t]
-        syns[..., t] = syn / tau_s
+        syn = syn - syn / tau_s + inputs[..., t] # Eq. (3) ?
+        syns[..., t] = syn / tau_s # Why dividing by tau_s again?
 
     return syns
 
@@ -48,7 +48,7 @@ class loss_count(torch.autograd.Function):  # a and u is the incremnet of each t
         shape = outputs.shape
         n_steps = shape[4]
         out_count = torch.sum(outputs, dim=4)
-
+        # look more in detail
         delta = (out_count - target) / n_steps
         mask = torch.ones_like(out_count)
         mask[target == undesired_count] = 0
