@@ -214,9 +214,7 @@ if __name__ == '__main__':
     
     logging.info("dataset loaded")
     if params['Network']['dataset'] == "MNIST":
-        print('issue before')
         data_path = os.path.expanduser(params['Network']['data_path'])
-        print(data_path)
         train_loader, test_loader = loadMNIST.get_mnist(data_path, params['Network'])
     elif params['Network']['dataset'] == "NMNIST_Spiking":
         data_path = os.path.expanduser(params['Network']['data_path'])
