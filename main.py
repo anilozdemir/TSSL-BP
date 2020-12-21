@@ -115,7 +115,7 @@ def train(network, trainloader, opti, epoch, states, network_config, layers_conf
         min_loss = total_loss
 
     logging.info("Train Accuracy: %.3f (%.3f). Loss: %.3f (%.3f)\n", 100. * total_accuracy, 100 * max_accuracy, total_loss, min_loss)
-
+    print(epoch, ' - how long it takes', (datetime.now() - start_time).total_seconds())
 
 def test(network, testloader, epoch, states, network_config, layers_config, early_stopping):
     global best_acc
