@@ -8,3 +8,5 @@ pandas
 pycuda
 seaborn
 sklearn
+wandb
+plotly

@@ -3,14 +3,14 @@ import os
 import torch
 from network_parser import parse
 from datasets import loadMNIST, loadCIFAR10, loadFashionMNIST, loadNMNIST_Spiking 
-import logging
+# import logging
 import cnns
 from utils import learningStats
 from utils import aboutCudaDevices
 from utils import EarlyStopping
 import functions.loss_f as loss_f
 import numpy as np
-from datetime import datetime
+# from datetime import datetime
 import pycuda.driver as cuda
 from torch.nn.utils import clip_grad_norm_
 from torch.nn.utils import clip_grad_value_
@@ -25,6 +25,8 @@ import argparse
 # Anil adds
 import matplotlib
 matplotlib.use('Agg') 
+import wandb
+import plotly 
 
 max_accuracy = 0
 min_loss = 1000
@@ -33,14 +35,14 @@ min_loss = 1000
 def train(network, trainloader, opti, epoch, states, network_config, layers_config, err):
     global max_accuracy
     global min_loss
-    logging.info('\nEpoch: %d', epoch)
+    # logging.info('\nEpoch: %d', epoch)
     train_loss = 0
     correct = 0
     total = 0
     n_steps = network_config['n_steps']
     n_class = network_config['n_class']
     batch_size = network_config['batch_size']
-    time = datetime.now()
+    # time = datetime.now()
 
     if network_config['loss'] == "kernel":
         # set target signal
@@ -50,9 +52,9 @@ def train(network, trainloader, opti, epoch, states, network_config, layers_conf
             desired_spikes = torch.tensor([0, 1, 1, 1, 1]).repeat(int(n_steps/5))
         desired_spikes = desired_spikes.view(1, 1, 1, 1, n_steps).to(device)
         desired_spikes = loss_f.psp(desired_spikes, network_config).view(1, 1, 1, n_steps)
-    des_str = "Training @ epoch " + str(epoch)
+    # des_str = "Training @ epoch " + str(epoch)
     for batch_idx, (inputs, labels) in enumerate(trainloader):
-        start_time = datetime.now()
+        # start_time = datetime.now()
         targets = torch.zeros((labels.shape[0], n_class, 1, 1, n_steps), dtype=dtype).to(device) 
         if network_config["rule"] == "TSSLBP":
             if len(inputs.shape) < 5:
@@ -105,7 +107,7 @@ def train(network, trainloader, opti, epoch, states, network_config, layers_conf
         states.training.correctSamples = correct
         states.training.numSamples = total
         states.training.lossSum += loss.cpu().data.item() 
-        states.print(epoch, batch_idx, (datetime.now() - time).total_seconds())
+        # states.print(epoch, batch_idx, (datetime.now() - time).total_seconds())
 
     total_accuracy = correct / total
     total_loss = train_loss / total
@@ -113,9 +115,10 @@ def train(network, trainloader, opti, epoch, states, network_config, layers_conf
         max_accuracy = total_accuracy
     if min_loss > total_loss:
         min_loss = total_loss
+    wandb.log({"train-accuracy":total_accuracy, "train-loss": total_loss})
 
-    logging.info("Train Accuracy: %.3f (%.3f). Loss: %.3f (%.3f)\n", 100. * total_accuracy, 100 * max_accuracy, total_loss, min_loss)
-    print(epoch, ' - how long it takes', (datetime.now() - start_time).total_seconds())
+    # logging.info("Train Accuracy: %.3f (%.3f). Loss: %.3f (%.3f)\n", 100. * total_accuracy, 100 * max_accuracy, total_loss, min_loss)
+    # print(epoch, ' - how long it takes', (datetime.now() - start_time).total_seconds())
 
 def test(network, testloader, epoch, states, network_config, layers_config, early_stopping):
     global best_acc
@@ -124,12 +127,11 @@ def test(network, testloader, epoch, states, network_config, layers_config, earl
     total = 0
     n_steps = network_config['n_steps']
     n_class = network_config['n_class']
-    time = datetime.now()
+    # time = datetime.now()
     y_pred = []
     y_true = []
-    des_str = "Testing @ epoch " + str(epoch)
+    # des_str = "Testing @ epoch " + str(epoch)
     with torch.no_grad():
-        # for batch_idx, (inputs, labels) in enumerate(track(testloader, description=des_str, auto_refresh=False)):
         for batch_idx, (inputs, labels) in enumerate(testloader):
             if network_config["rule"] == "TSSLBP":
                 if len(inputs.shape) < 5:
@@ -151,7 +153,7 @@ def test(network, testloader, epoch, states, network_config, layers_config, earl
 
             states.testing.correctSamples += (predicted == labels).sum().item()
             states.testing.numSamples = total
-            states.print(epoch, batch_idx, (datetime.now() - time).total_seconds())
+            # states.print(epoch, batch_idx, (datetime.now() - time).total_seconds())
 
     test_accuracy = correct / total
     if test_accuracy > best_acc:
@@ -161,15 +163,20 @@ def test(network, testloader, epoch, states, network_config, layers_config, earl
         cf = confusion_matrix(y_true, y_pred, labels=np.arange(n_class))
         df_cm = pd.DataFrame(cf, index = [str(ind*25) for ind in range(n_class)], columns=[str(ind*25) for ind in range(n_class)])
         plt.figure()
-        sn.heatmap(df_cm, annot=True)
+        heatmap=sn.heatmap(df_cm, annot=True)
         plt.savefig("confusion_matrix.png")
         plt.close()
 
-    logging.info("Train Accuracy: %.3f (%.3f).\n", 100. * test_accuracy, 100 * best_acc)
+        data  = [[s] for s in y_pred]
+        table = wandb.Table(data=data, columns=["scores"])
+        wandb.log({'hist': wandb.plot.histogram(table, "scores", title='prediction scores')})
+        wandb.log({"CM"  : wandb.plot.confusion_matrix(y_pred, y_true, range(n_class))})
+        wandb.log({"test-accuracy":test_accuracy, 'CM-image':wandb.Image(heatmap)})
+
+    # logging.info("Train Accuracy: %.3f (%.3f).\n", 100. * test_accuracy, 100 * best_acc)
     # Save checkpoint.
     acc = 100. * correct / total
     early_stopping(acc, network, epoch)
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -188,14 +195,14 @@ if __name__ == '__main__':
         config_path = args.config
 
 
-    logging.basicConfig(filename='result.log', level=logging.INFO)
+    # logging.basicConfig(filename='result.log', level=logging.INFO)
     
-    logging.info("start parsing settings")
+    # logging.info("start parsing settings")
     
     params = parse(config_path)
     
     
-    logging.info("finish parsing settings")
+    # logging.info("finish parsing settings")
     
     dtype = torch.float32
     
@@ -204,15 +211,15 @@ if __name__ == '__main__':
         device = torch.device("cuda")
         cuda.init()
         c_device = aboutCudaDevices()
-        print(c_device.info())
-        print("selected device: ", device)
+        # print(c_device.info())
+        # print("selected device: ", device)
     else:
         device = torch.device("cpu")
-        print("No GPU is found")
+        # print("No GPU is found")
     
     glv.init(dtype, device, params['Network']['n_steps'], params['Network']['tau_s'] )
     
-    logging.info("dataset loaded")
+    # logging.info("dataset loaded")
     if params['Network']['dataset'] == "MNIST":
         data_path = os.path.expanduser(params['Network']['data_path'])
         train_loader, test_loader = loadMNIST.get_mnist(data_path, params['Network'])
@@ -227,10 +234,15 @@ if __name__ == '__main__':
         train_loader, test_loader = loadCIFAR10.get_cifar10(data_path, params['Network'])
     else:
         raise Exception('Unrecognized dataset name.')
-    logging.info("dataset loaded")
+    # logging.info("dataset loaded")
     
     net = cnns.Network(params['Network'], params['Layers'], list(train_loader.dataset[0][0].shape)).to(device)
-    
+
+    # W&B stuff
+    wandb.init(project="tssl-bp-repr", entity="ml-repr",config=params['Network'], tags=['preliminary', 'delete'])
+    wandb.watch(net, log="all")
+    wandb.save(config_path)
+
     if args.checkpoint is not None:
         checkpoint_path = args.checkpoint
         checkpoint = torch.load(checkpoint_path)
@@ -253,7 +265,13 @@ if __name__ == '__main__':
         l_states.testing.reset()
         test(net, test_loader, e, l_states, params['Network'], params['Layers'], early_stopping)
         l_states.testing.update()
+        wandb.run.summary["best_accuracy"] = best_acc
+        wandb.log({"best-accuracy":best_acc, "best-accuracy-epoch": best_epoch})
         # if early_stopping.early_stop:
         #     break
     
-    logging.info("Best Accuracy: %.3f, at epoch: %d \n", best_acc, best_epoch)
+    torch.save(net.state_dict(), "model.h5")
+    wandb.save('model.h5')
+    wandb.save('checkpoint/ckpt.pth')
+
+    # logging.info("Best Accuracy: %.3f, at epoch: %d \n", best_acc, best_epoch)

@@ -8,3 +8,7 @@ datasets/mnist/
 __pycache__/
 checkpoint/
 *.log
+wandb/
+*.h5
+model.h5
+
