@@ -194,18 +194,11 @@ if __name__ == '__main__':
     else:
         config_path = args.config
 
-
     # logging.basicConfig(filename='result.log', level=logging.INFO)
-    
     # logging.info("start parsing settings")
-    
     params = parse(config_path)
-    
-    
     # logging.info("finish parsing settings")
-    
     dtype = torch.float32
-    
     # Check whether a GPU is available
     if torch.cuda.is_available():
         device = torch.device("cuda")
@@ -273,5 +266,4 @@ if __name__ == '__main__':
     torch.save(net.state_dict(), "model.h5")
     wandb.save('model.h5')
     wandb.save('checkpoint/ckpt.pth')
-
     # logging.info("Best Accuracy: %.3f, at epoch: %d \n", best_acc, best_epoch)
