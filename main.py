@@ -2,7 +2,7 @@ import os
 
 import torch
 from network_parser import parse
-from datasets import loadMNIST, loadCIFAR10, loadFashionMNIST, loadNMNIST_Spiking 
+from datasets import loadMNIST, loadCIFAR10, loadFashionMNIST, loadNMNIST_Spiking, loadCIFAR10dvs
 # import logging
 import cnns
 from utils import learningStats
@@ -225,6 +225,9 @@ if __name__ == '__main__':
     elif params['Network']['dataset'] == "CIFAR10":
         data_path = os.path.expanduser(params['Network']['data_path'])
         train_loader, test_loader = loadCIFAR10.get_cifar10(data_path, params['Network'])
+    elif params['Network']['dataset'] == "CIFAR10dvs":
+        data_path = os.path.expanduser(params['Network']['data_path'])
+        train_loader, test_loader = loadCIFAR10dvs.get_cifar10dvs(data_path, params['Network'])
     else:
         raise Exception('Unrecognized dataset name.')
     # logging.info("dataset loaded")
