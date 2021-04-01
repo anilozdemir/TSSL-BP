@@ -13,7 +13,7 @@ def psp(inputs, network_config):
 
     for t in range(n_steps):
         syn = syn - syn / tau_s + inputs[..., t] # Eq. (3) ?
-        syns[..., t] = syn / tau_s # Why dividing by tau_s again?
+        syns[..., t] = syn / tau_s 
 
     return syns
 
